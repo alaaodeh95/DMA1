@@ -42,21 +42,7 @@ def calculate_frequent_patterns(df, min_support):
     frequent_itemsets = apriori(df_transactions, min_support, use_colnames=True)
     return frequent_itemsets
 
-def generate_association_rules(fp, min_confidence, min_lift = 1):
-    # Generate association rules
-    rules = association_rules(fp, metric="confidence", min_threshold=min_confidence)
-    rules = rules[rules['lift'] >= min_lift]
-    rules['rule'] = (
-        rules['antecedents'].apply(lambda x: set(x)).astype(str) +
-        " => " +
-        rules['consequents'].apply(lambda x: set(x)).astype(str)
-    )
-    selected_columns = ['rule', 'support', 'confidence', 'lift']
-
-    # Create a new DataFrame containing only the selected columns
-    return rules[selected_columns]
-
-def generate_association_rules_hybrid(fp, min_confidence, confidence_weight):
+def generate_association_rules(fp, min_confidence, confidence_weight, country):
     # Generate association rules
     rules = association_rules(fp, metric="confidence", min_threshold=min_confidence)
 
@@ -65,18 +51,17 @@ def generate_association_rules_hybrid(fp, min_confidence, confidence_weight):
     max_lift = rules['lift'].max()
     rules['normalized_lift'] = (rules['lift'] - min_lift) / (max_lift - min_lift)
 
-    # Combine confidence and normalized lift with equal weights
-    rules['combined_score'] = confidence_weight * rules['confidence'] + (1-confidence_weight) * rules['normalized_lift']
+    # Combine confidence and normalized lift
+    rules['Score'] = confidence_weight * rules['confidence'] + (1-confidence_weight) * rules['normalized_lift']
 
     # Create the rule as a string
-    rules['rule'] = (
+    rules['Rule'] = (
         rules['antecedents'].apply(lambda x: set(x)).astype(str) +
         " => " +
         rules['consequents'].apply(lambda x: set(x)).astype(str)
     )
+    rules['Country'] = country
+    rules.rename(columns={'support': 'Support', 'confidence': 'Confidence', 'lift':'Lift'}, inplace=True)
 
-    # Select the desired columns
-    selected_columns = ['rule', 'support', 'confidence', 'lift', 'combined_score']
-
-    # Create a new DataFrame containing only the selected columns
+    selected_columns = ['Country', 'Rule', 'Support', 'Confidence', 'Lift', 'Score']
     return rules[selected_columns]
