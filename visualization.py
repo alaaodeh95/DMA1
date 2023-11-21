@@ -2,24 +2,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def data_visualization(df):
+def data_visualization(df, percentile=1, bins=50):
     # Set the aesthetic style of the plots
     sns.set_style("whitegrid")
 
-    # Prepare the DataFrame
-    numerical_data = df[['Quantity', 'UnitPrice']] # Add more numerical columns if needed
+    # Filtering based on percentile
+    quantity_threshold = df['Quantity'].quantile(percentile)
+    unitprice_threshold = df['UnitPrice'].quantile(percentile)
+    filtered_df = df[(df['Quantity'] <= quantity_threshold) & (df['UnitPrice'] <= unitprice_threshold)]
 
     # Creating a grid of subplots
-    fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(15, 15)) # Adjust nrows to 3 for the new plots
+    fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(15, 15))
 
     # Histogram for Quantity
-    df['Quantity'].hist(bins=50, ax=axes[0,0])
+    filtered_df['Quantity'].hist(bins=bins, ax=axes[0,0])
     axes[0,0].set_title('Distribution of Quantity')
     axes[0,0].set_xlabel('Quantity')
     axes[0,0].set_ylabel('Frequency')
 
     # Histogram for UnitPrice
-    df['UnitPrice'].hist(bins=50, ax=axes[0,1])
+    filtered_df['UnitPrice'].hist(bins=bins, ax=axes[0,1])
     axes[0,1].set_title('Distribution of UnitPrice')
     axes[0,1].set_xlabel('UnitPrice')
     axes[0,1].set_ylabel('Frequency')
@@ -37,24 +39,30 @@ def data_visualization(df):
     axes[1,0].set_ylabel('Number of Transactions')
 
     # Boxplot for Quantity
-    sns.boxplot(x=df['Quantity'], ax=axes[1,1])
+    sns.boxplot(x=filtered_df['Quantity'], ax=axes[1,1])
     axes[1,1].set_title('Boxplot of Quantity')
 
     # Boxplot for UnitPrice
-    sns.boxplot(x=df['UnitPrice'], ax=axes[1,2])
+    sns.boxplot(x=filtered_df['UnitPrice'], ax=axes[1,2])
     axes[1,2].set_title('Boxplot of UnitPrice')
 
 
     # Density Plot for UnitPrice
-    sns.kdeplot(df['UnitPrice'], fill=True, ax=axes[2,0])
+    sns.kdeplot(filtered_df['UnitPrice'], fill=True, ax=axes[2,0])
     axes[2,0].set_title('Density Plot of UnitPrice')
     axes[2,0].set_xlabel('UnitPrice')
 
     # Scatter Plot for Quantity vs UnitPrice
-    axes[2,1].scatter(df['Quantity'], df['UnitPrice'])
+    axes[2,1].scatter(filtered_df['Quantity'], filtered_df['UnitPrice'])
     axes[2,1].set_title('Scatter Plot of Quantity vs UnitPrice')
     axes[2,1].set_xlabel('Quantity')
     axes[2,1].set_ylabel('UnitPrice')
+    
+    # Bar chart for Items
+    df['Description'].value_counts().head(30).plot(kind='bar', ax=axes[2,2])
+    axes[2,2].set_title('Most frequent items')
+    axes[2,2].set_xlabel('Description')
+    axes[2,2].set_ylabel('Number of Items in transactions')
 
     plt.tight_layout() # Adjusts the plots to fit in the figure area
     plt.show()
